@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  # سرویس دیتابیس MongoDB
+  db:
+    image: mongo:latest
+    container_name: trading_mongo
+    # اگر بخواهید داده‌ها پایدار بماند (Volume):
+    volumes:
+      - ./.data/db:/data/db
+    ports:
+      - "27017:27017"
+    # در صورت نیاز، متغیرهای محیطی Mongo را هم می‌توانید اینجا بگذارید
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME=myuser
+    #   - MONGO_INITDB_ROOT_PASSWORD=mypass
+
+  # سرویس اپلیکیشن اصلی
+  app:
+    build: .
+    container_name: trading_app
+    # مسیر فعلی را به پوشه /app درون کانتینر مپ می‌کنیم (در حالت Dev)؛
+    # توجه کنید که اینکار می‌تواند روی لایه COPY در Dockerfile اثر بگذارد.
+    volumes:
+      - .:/app
+    # اگر main_run.py روی پورتی سرویس می‌دهد (مثلاً 8000)، آن را مپ کنید:
+    ports:
+      - "8000:8000"
+    # برای اینکه app بتواند به سرویس db دسترسی داشته باشد، از نام سرویسی db استفاده می‌کنیم.
+    environment:
+      - MONGO_URI=mongodb://db:27017
+      # می‌توانید سایر ENVهای موردنیاز را هم از اینجا تعریف کنید
+      # - BROKER_LOGIN=123456
+      # - BROKER_PASSWORD=abcd1234
+    depends_on:
+      - db
+    command: >
+      sh -c "python main_run.py"
+      # یا اگر فایلی مانند run.sh دارید: sh -c './run.sh'
+
